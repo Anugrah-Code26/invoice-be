@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
-class InvoiceItemDTO {
+public class InvoiceItemDTO {
     private Long productId;
     private String description;
 

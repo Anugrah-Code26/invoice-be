@@ -1,15 +1,15 @@
 package com.invoice.backend.service.auth.impl;
 
-import com.miniproject.eventure.infrastructure.auth.dto.TokenPairResponseDTO;
-import com.miniproject.eventure.usecase.auth.TokenGenerationUsecase;
-import com.miniproject.eventure.usecase.auth.TokenRefreshUsecase;
+import com.invoice.backend.infrastructure.auth.dto.TokenPairResponseDTO;
+import com.invoice.backend.service.auth.TokenGenerationService;
+import com.invoice.backend.service.auth.TokenRefreshService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TokenRefreshServiceImpl implements TokenRefreshUsecase {
-    private final TokenGenerationUsecase tokenService;
+public class TokenRefreshServiceImpl implements TokenRefreshService {
+    private final TokenGenerationService tokenService;
 
-    public TokenRefreshServiceImpl(TokenGenerationUsecase tokenService) {
+    public TokenRefreshServiceImpl(TokenGenerationService tokenService) {
         this.tokenService = tokenService;
     }
 

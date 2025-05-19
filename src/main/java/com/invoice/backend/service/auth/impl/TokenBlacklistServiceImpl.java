@@ -1,15 +1,15 @@
 package com.invoice.backend.service.auth.impl;
 
 import com.invoice.backend.infrastructure.repository.RedisTokenRepository;
-import com.invoice.backend.service.auth.TokenBlacklistUsecase;
+import com.invoice.backend.service.auth.TokenBlacklistService;
 
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
 @Service
-public class TokenBlacklistServiceImpl implements TokenBlacklistUsecase {
-    private final String REDIS_BLACKLIST_KEY = "eventure_blacklist_token:";
+public class TokenBlacklistServiceImpl implements TokenBlacklistService {
+    private final String REDIS_BLACKLIST_KEY = "invoice_blacklist_token:";
     private final RedisTokenRepository redisTokenRepository;
 
     public TokenBlacklistServiceImpl(RedisTokenRepository redisTokenRepository) {

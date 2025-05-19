@@ -1,9 +1,9 @@
 package com.invoice.backend.service.auth.impl;
 
-import com.miniproject.eventure.common.exeptions.DataNotFoundException;
-import com.miniproject.eventure.usecase.auth.TokenGenerationUsecase;
-import com.miniproject.eventure.entity.user.User;
-import com.miniproject.eventure.infrastructure.user.repository.UserRepository;
+import com.invoice.backend.common.exceptions.DataNotFoundException;
+import com.invoice.backend.service.auth.TokenGenerationService;
+import com.invoice.backend.entity.user.User;
+import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.*;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 
 @Service
-public class TokenGenerationServiceImpl implements TokenGenerationUsecase {
+public class TokenGenerationServiceImpl implements TokenGenerationService {
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
     private final JwtDecoder jwtDecoder;
@@ -46,7 +46,7 @@ public class TokenGenerationServiceImpl implements TokenGenerationUsecase {
                 .expiresAt(now.plusSeconds(expiry))
                 .subject(email)
                 .claim("scope", scope)
-                .claim("userId", user.getUserId())
+                .claim("userId", user.getId())
                 .claim("type", tokenType.name())
                 .build();
 

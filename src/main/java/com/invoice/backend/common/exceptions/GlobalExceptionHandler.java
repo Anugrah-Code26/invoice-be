@@ -16,6 +16,21 @@ import java.util.Map;
 @Log
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(DataNotFoundException.class)
+    public ResponseEntity<String> handleResourceNotFoundException(DataNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<String> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<?> handleDataAccessException(DataAccessException exception) {
         return ApiResponse.failed(exception.getMessage());

@@ -27,8 +27,6 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE users SET deleted = true WHERE id=?")
-@Where(clause = "deleted=false")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_gen")

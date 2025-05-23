@@ -8,10 +8,10 @@ import com.invoice.backend.common.exceptions.DataNotFoundException;
 import java.util.List;
 
 public interface ProductService {
-    Product createProduct(ProductDTO productDTO, User user);
-    List<Product> getAllActiveProducts(User user);
-    List<Product> getAllProducts(User user);
-    Product getProductById(Long id, User user) throws DataNotFoundException;
-    Product updateProduct(Long id, ProductDTO productDTO, User user) throws DataNotFoundException;
-    void softDeleteProduct(Long id, User user) throws DataNotFoundException;
+    Product createProduct(ProductDTO productDTO);
+    List<Product> getAllActiveProducts();
+    List<Product> getAllProducts();
+    Product getProductById(Long id) throws DataNotFoundException;
+    Product updateProduct(Long id, ProductDTO productDTO) throws DataNotFoundException;
+    void softDeleteProduct(Long id) throws DataNotFoundException;
 }

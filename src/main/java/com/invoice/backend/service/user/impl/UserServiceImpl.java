@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
         user.setAddress(userDTO.getAddress());
         user.setPhoneNumber(userDTO.getPhoneNumber());
 
-        Optional<Role> defaultRole = roleRepository.findByName("USER");
+        Optional<Role> defaultRole = roleRepository.findByName("CLIENT");
         if (defaultRole.isPresent()) {
             user.getRoles().add(defaultRole.get());
         } else {

@@ -23,40 +23,36 @@ public class InvoiceController {
 
     @PostMapping
     public ResponseEntity<Invoice> createInvoice(
-            @Valid @RequestBody InvoiceDTO invoiceDTO,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
+            @Valid @RequestBody InvoiceDTO invoiceDTO) throws DataNotFoundException {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(invoiceService.createInvoice(invoiceDTO, user));
+                .body(invoiceService.createInvoice(invoiceDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Invoice>> getAllInvoices(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(invoiceService.getAllInvoices(user));
+    public ResponseEntity<List<Invoice>> getAllInvoices() {
+        return ResponseEntity.ok(invoiceService.getAllInvoices());
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<List<Invoice>> getInvoicesByStatus(
-            @PathVariable String status,
-            @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(invoiceService.getInvoicesByStatus(user, Invoice.Status.valueOf(status.toUpperCase())));
+            @PathVariable String status) {
+        return ResponseEntity.ok(invoiceService.getInvoicesByStatus(Invoice.Status.valueOf(status.toUpperCase())));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Invoice> getInvoiceById(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        return ResponseEntity.ok(invoiceService.getInvoiceById(id, user));
+            @PathVariable Long id) throws DataNotFoundException {
+        return ResponseEntity.ok(invoiceService.getInvoiceById(id));
     }
 
     @PatchMapping("/{id}/status/{status}")
     public ResponseEntity<Invoice> updateInvoiceStatus(
             @PathVariable Long id,
-            @PathVariable String status,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
+            @PathVariable String status) throws DataNotFoundException {
         return ResponseEntity.ok(invoiceService.updateInvoiceStatus(
                 id,
-                Invoice.Status.valueOf(status.toUpperCase()),
-                user));
+                Invoice.Status.valueOf(status.toUpperCase())
+        ));
     }
 
     @PostMapping("/process-recurring")

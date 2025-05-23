@@ -25,38 +25,31 @@ public class ClientController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<Client> createClient(
-            @Valid @RequestBody ClientDTO clientDTO,
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<Client> createClient(@Valid @RequestBody ClientDTO clientDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(clientService.createClient(clientDTO, user));
+                .body(clientService.createClient(clientDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Client>> getAllClients(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(clientService.getAllClients(user));
+    public ResponseEntity<List<Client>> getAllClients() {
+        return ResponseEntity.ok(clientService.getAllClients());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Client> getClientById(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        return ResponseEntity.ok(clientService.getClientById(id, user));
+    public ResponseEntity<Client> getClientById(@PathVariable Long id) throws DataNotFoundException {
+        return ResponseEntity.ok(clientService.getClientById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Client> updateClient(
             @PathVariable Long id,
-            @Valid @RequestBody ClientDTO clientDTO,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        return ResponseEntity.ok(clientService.updateClient(id, clientDTO, user));
+            @Valid @RequestBody ClientDTO clientDTO) throws DataNotFoundException {
+        return ResponseEntity.ok(clientService.updateClient(id, clientDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        clientService.deleteClient(id, user);
+    public ResponseEntity<Void> deleteClient(@PathVariable Long id) throws DataNotFoundException {
+        clientService.deleteClient(id);
         return ResponseEntity.noContent().build();
     }
 }

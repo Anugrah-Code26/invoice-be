@@ -51,8 +51,14 @@ public class Invoice {
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
 
-    @Column(name = "payment_terms")
-    private String paymentTerms;
+    public enum PaymentTerms {
+        MONTHLY, WEEKLY
+    }
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_terms", nullable = false)
+    private PaymentTerms paymentTerms;
 
     public enum Status {
         PENDING, PAID, OVERDUE
@@ -60,18 +66,28 @@ public class Invoice {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column()
     private Status status;
 
-    @NotNull
-    @Column(name = "total_amount", nullable = false)
-    private Double totalAmount;
+//    @NotNull
+//    @Column(name = "total_amount", nullable = false)
+//    private Double totalAmount;
 
     @Column(name = "is_recurring", nullable = false)
     private Boolean isRecurring = false;
 
-    @Column(name = "recurring_schedule")
-    private String recurringSchedule;
+//    public enum RecurringSchedule {
+//        MONTH_BEFORE_DUE,
+//        TWO_WEEKS_BEFORE_DUE,
+//        WEEK_BEFORE_DUE,
+//        THREE_DAYS_BEFORE_DUE,
+//        DAY_BEFORE_DUE
+//    }
+//
+//    @NotNull
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "recurring_schedule", nullable = false)
+//    private RecurringSchedule recurringSchedule;
 
     @Column(name = "next_recurring_date")
     private LocalDate nextRecurringDate;
@@ -98,6 +114,6 @@ public class Invoice {
     }
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "invoice", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<InvoiceItem> items = new HashSet<>();
+    @OneToOne(mappedBy = "invoice", cascade = CascadeType.ALL)
+    private InvoiceItem invoiceItem;
 }

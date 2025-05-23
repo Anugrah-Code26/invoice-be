@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,42 +22,38 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<Product> createProduct(
-            @Valid @RequestBody ProductDTO productDTO,
-            @AuthenticationPrincipal User user) {
+            @Valid @RequestBody ProductDTO productDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productService.createProduct(productDTO, user));
+                .body(productService.createProduct(productDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllActiveProducts(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(productService.getAllActiveProducts(user));
+    public ResponseEntity<List<Product>> getAllActiveProducts() {
+        return ResponseEntity.ok(productService.getAllActiveProducts());
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Product>> getAllProducts(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(productService.getAllProducts(user));
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        return ResponseEntity.ok(productService.getProductById(id, user));
+            @PathVariable Long id) throws DataNotFoundException {
+        return ResponseEntity.ok(productService.getProductById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id,
-            @Valid @RequestBody ProductDTO productDTO,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        return ResponseEntity.ok(productService.updateProduct(id, productDTO, user));
+            @Valid @RequestBody ProductDTO productDTO) throws DataNotFoundException {
+        return ResponseEntity.ok(productService.updateProduct(id, productDTO));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> softDeleteProduct(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User user) throws DataNotFoundException {
-        productService.softDeleteProduct(id, user);
+            @PathVariable Long id) throws DataNotFoundException {
+        productService.softDeleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 }

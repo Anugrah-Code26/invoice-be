@@ -8,9 +8,9 @@ import com.invoice.backend.common.exceptions.DataNotFoundException;
 import java.util.List;
 
 public interface ClientService {
-    Client createClient(ClientDTO clientDTO, User user);
-    List<Client> getAllClients(User user);
-    Client getClientById(Long id, User user) throws DataNotFoundException;
-    Client updateClient(Long id, ClientDTO clientDTO, User user) throws DataNotFoundException;
-    void deleteClient(Long id, User user) throws DataNotFoundException;
+    Client createClient(ClientDTO clientDTO);
+    List<Client> getAllClients();
+    Client getClientById(Long id) throws DataNotFoundException;
+    Client updateClient(Long id, ClientDTO clientDTO) throws DataNotFoundException;
+    void deleteClient(Long id) throws DataNotFoundException;
 }

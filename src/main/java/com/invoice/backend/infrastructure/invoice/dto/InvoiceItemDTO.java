@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class InvoiceItemDTO {
-    @NotNull(message = "Product ID is required")
     private Long productId;
     private String description;
 

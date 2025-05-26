@@ -69,9 +69,9 @@ public class Invoice {
     @Column()
     private Status status;
 
-//    @NotNull
-//    @Column(name = "total_amount", nullable = false)
-//    private Double totalAmount;
+    @NotNull
+    @Column(name = "total_amount", nullable = false)
+    private Double totalAmount;
 
     @Column(name = "is_recurring", nullable = false)
     private Boolean isRecurring = false;
@@ -114,6 +114,6 @@ public class Invoice {
     }
 
     @JsonManagedReference
-    @OneToOne(mappedBy = "invoice", cascade = CascadeType.ALL)
-    private InvoiceItem invoiceItem;
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<InvoiceItem> items = new HashSet<>();
 }

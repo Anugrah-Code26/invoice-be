@@ -25,7 +25,7 @@ public class InvoiceItem {
     private Long id;
 
     @JsonBackReference
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id")
     private Invoice invoice;
 

@@ -71,8 +71,4 @@ public class Product {
     protected void onUpdate() {
         updatedAt = OffsetDateTime.now();
     }
-
-    @JsonManagedReference
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    private Set<InvoiceItem> invoiceItems = new HashSet<>();
 }

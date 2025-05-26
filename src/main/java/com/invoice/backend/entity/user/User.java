@@ -17,9 +17,12 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "remedial")
@@ -55,6 +58,12 @@ public class User {
 
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "token_expiry_date")
+    private Instant tokenExpiryDate;
 
     @Column(nullable = false)
     private Boolean deleted = false;
@@ -97,4 +106,9 @@ public class User {
     @JsonManagedReference
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Invoice> invoices = new HashSet<>();
+
+    public void generateVerificationToken() {
+        this.verificationToken = UUID.randomUUID().toString();
+        this.tokenExpiryDate = Instant.now().plus(24, ChronoUnit.HOURS);
+    }
 }

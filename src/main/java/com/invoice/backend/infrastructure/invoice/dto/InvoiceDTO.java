@@ -15,17 +15,12 @@ public class InvoiceDTO {
     private String invoiceNumber;
     private LocalDate issueDate;
     private LocalDate dueDate;
-
-    @NotNull(message = "Payment Terms is required")
     private String paymentTerms;
-
     private Status status;
-    private Boolean isRecurring = true;
+    private Boolean isRecurring = false;
 //    private String recurringSchedule;
     private LocalDate nextRecurringDate;
 
-    private InvoiceItemDTO item;
-
-//    @NotNull(message = "Invoice Item ID is required")
-//    private Long invoiceItemId;
+    @NotEmpty(message = "Invoice items are required")
+    private List<InvoiceItemDTO> items;
 }

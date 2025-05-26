@@ -10,15 +10,15 @@ import com.invoice.backend.infrastructure.auth.Claims;
 import com.invoice.backend.infrastructure.client.repository.ClientRepository;
 import com.invoice.backend.infrastructure.invoice.dto.InvoiceDTO;
 import com.invoice.backend.infrastructure.invoice.dto.InvoiceItemDTO;
+import com.invoice.backend.infrastructure.invoice.dto.InvoiceResponseDTO;
 import com.invoice.backend.infrastructure.invoice.repository.InvoiceRepository;
 import com.invoice.backend.infrastructure.product.repository.ProductRepository;
 import com.invoice.backend.infrastructure.user.repository.UserRepository;
-import com.invoice.backend.service.client.ClientService;
 import com.invoice.backend.service.invoice.InvoiceService;
-import com.invoice.backend.service.product.ProductService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,10 +32,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
-    private final ClientService clientService;
-    private final ProductService productService;
 
     @Override
+    @Transactional
     public Invoice createInvoice(InvoiceDTO req) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
@@ -57,23 +56,31 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPaymentTerms(Invoice.PaymentTerms.valueOf(req.getPaymentTerms()));
         invoice.setStatus(req.getStatus() != null ? req.getStatus() : Invoice.Status.PENDING);
         invoice.setIsRecurring(true);
+        invoice.setIsRecurring(req.getIsRecurring());
 //        invoice.setRecurringSchedule(req.getRecurringSchedule());
         invoice.setNextRecurringDate(calculateNextRecurringDate(LocalDate.now(), Invoice.PaymentTerms.valueOf(req.getPaymentTerms())));
 
-        InvoiceItem item = createInvoiceItem(req.getItem());
-        item.setInvoice(invoice);
+        Set<InvoiceItem> items = req.getItems().stream()
+                .map(itemReq -> createInvoiceItem(itemReq, invoice))
+                .collect(Collectors.toSet());
 
-        invoice.setInvoiceItem(item);
+        invoice.setItems(items);
+
+        double totalAmount = items.stream()
+                .mapToDouble(InvoiceItem::getTotalPrice)
+                .sum();
+        invoice.setTotalAmount(totalAmount);
 
         return invoiceRepository.save(invoice);
     }
 
-    private InvoiceItem createInvoiceItem(InvoiceItemDTO req) throws DataNotFoundException {
+    private InvoiceItem createInvoiceItem(InvoiceItemDTO req, Invoice invoice) throws DataNotFoundException {
         InvoiceItem item = new InvoiceItem();
 
         Product product = productRepository.findById(req.getProductId())
                 .orElseThrow(() -> new DataNotFoundException("Product not found"));
 
+        item.setInvoice(invoice);
         item.setProduct(product);
         item.setDescription(product.getName());
         item.setUnitPrice(product.getPrice());
@@ -84,23 +91,27 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public List<Invoice> getAllInvoices() {
+    public List<InvoiceResponseDTO> getAllInvoices() {
         Long userId = Claims.getUserIdFromJwt();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
-        return invoiceRepository.findByUserId(user.getId());
+        return invoiceRepository.findAll().stream()
+                .map(InvoiceResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Invoice> getInvoicesByStatus(Invoice.Status status) {
+    public List<InvoiceResponseDTO> getInvoicesByStatus(Invoice.Status status) {
         Long userId = Claims.getUserIdFromJwt();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
-        return invoiceRepository.findByUserIdAndStatus(user.getId(), status);
+        return invoiceRepository.findByStatus(status).stream()
+                .map(InvoiceResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -111,7 +122,6 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
         return invoiceRepository.findById(id)
-                .filter(invoice -> invoice.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
     }
 
@@ -141,35 +151,29 @@ public class InvoiceServiceImpl implements InvoiceService {
             newInvoice.setDueDate(calculateDueDate(LocalDate.now(), template.getPaymentTerms()));
             newInvoice.setPaymentTerms(template.getPaymentTerms());
             newInvoice.setStatus(Invoice.Status.PENDING);
+
+            Set<InvoiceItem> invoiceItems = template.getItems().stream()
+                    .map(original -> copyInvoiceItem(original, newInvoice))
+                    .collect(Collectors.toSet());
+
+            newInvoice.setItems(invoiceItems);
+            newInvoice.setTotalAmount(template.getTotalAmount());
             newInvoice.setIsRecurring(true);
 //            newInvoice.setRecurringSchedule(template.getRecurringSchedule());
             newInvoice.setNextRecurringDate(
                     calculateNextRecurringDate(LocalDate.now(), template.getPaymentTerms())
             );
 
-            // Copy the item details
-            InvoiceItem oldItem = template.getInvoiceItem();
-            InvoiceItem newItem = new InvoiceItem();
-            newItem.setProduct(oldItem.getProduct());
-            newItem.setDescription(oldItem.getDescription());
-            newItem.setUnitPrice(oldItem.getUnitPrice());
-            newItem.setQuantity(oldItem.getQuantity());
-            newItem.setTotalPrice(oldItem.getUnitPrice() * oldItem.getQuantity());
-            newItem.setInvoice(newInvoice);
-
-            newInvoice.setInvoiceItem(newItem);
-
-            // Save the new invoice (cascades to item)
             invoiceRepository.save(newInvoice);
 
-            // Update template's next recurring date
             template.setNextRecurringDate(newInvoice.getNextRecurringDate());
             invoiceRepository.save(template);
         }
     }
 
-    private InvoiceItem copyInvoiceItem(InvoiceItem original) {
+    private InvoiceItem copyInvoiceItem(InvoiceItem original, Invoice newInvoice) {
         InvoiceItem copy = new InvoiceItem();
+        copy.setInvoice(newInvoice);
         copy.setProduct(original.getProduct());
         copy.setDescription(original.getDescription());
         copy.setQuantity(original.getQuantity());

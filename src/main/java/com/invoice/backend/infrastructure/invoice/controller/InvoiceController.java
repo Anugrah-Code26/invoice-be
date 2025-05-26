@@ -1,15 +1,14 @@
 package com.invoice.backend.infrastructure.invoice.controller;
 
 import com.invoice.backend.entity.invoice.Invoice;
-import com.invoice.backend.entity.user.User;
 import com.invoice.backend.infrastructure.invoice.dto.InvoiceDTO;
+import com.invoice.backend.infrastructure.invoice.dto.InvoiceResponseDTO;
 import com.invoice.backend.service.invoice.InvoiceService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +28,12 @@ public class InvoiceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Invoice>> getAllInvoices() {
+    public ResponseEntity<List<InvoiceResponseDTO>> getAllInvoices() {
         return ResponseEntity.ok(invoiceService.getAllInvoices());
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Invoice>> getInvoicesByStatus(
+    public ResponseEntity<List<InvoiceResponseDTO>> getInvoicesByStatus(
             @PathVariable String status) {
         return ResponseEntity.ok(invoiceService.getInvoicesByStatus(Invoice.Status.valueOf(status.toUpperCase())));
     }

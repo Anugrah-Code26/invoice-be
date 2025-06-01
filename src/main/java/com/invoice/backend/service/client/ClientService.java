@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface ClientService {
     Client createClient(ClientDTO clientDTO);
+    List<Client> searchClients(String query);
     List<Client> getAllClients();
     Client getClientById(Long id) throws DataNotFoundException;
     Client updateClient(Long id, ClientDTO clientDTO) throws DataNotFoundException;

@@ -4,7 +4,6 @@ package com.invoice.backend.infrastructure.client.controller;
 import com.invoice.backend.common.responses.ApiResponse;
 import com.invoice.backend.infrastructure.client.dto.ClientDTO;
 import com.invoice.backend.service.client.ClientService;
-import com.invoice.backend.service.user.UserService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class ClientController {
 
     private final ClientService clientService;
-    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<?> createClient(@Valid @RequestBody ClientDTO clientDTO) {
@@ -26,9 +24,14 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllClients() {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
+    public ResponseEntity<?> getClients(@RequestParam(required = false) String search) {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get client success!", clientService.searchClients(search));
     }
+
+//    @GetMapping
+//    public ResponseEntity<?> getAllClients() {
+//        return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getClientById(@PathVariable Long id) throws DataNotFoundException {

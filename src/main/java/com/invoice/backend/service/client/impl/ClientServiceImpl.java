@@ -38,6 +38,14 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public List<Client> searchClients(String query) {
+        if (query == null || query.isBlank()) {
+            return clientRepository.findAll();
+        }
+        return clientRepository.searchClients(query);
+    }
+
+    @Override
     public List<Client> getAllClients() {
         Long userId = Claims.getUserIdFromJwt();
 

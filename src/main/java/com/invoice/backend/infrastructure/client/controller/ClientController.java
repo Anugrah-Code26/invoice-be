@@ -1,8 +1,7 @@
 package com.invoice.backend.infrastructure.client.controller;
 
 
-import com.invoice.backend.entity.client.Client;
-import com.invoice.backend.entity.user.User;
+import com.invoice.backend.common.responses.ApiResponse;
 import com.invoice.backend.infrastructure.client.dto.ClientDTO;
 import com.invoice.backend.service.client.ClientService;
 import com.invoice.backend.service.user.UserService;
@@ -11,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,31 +21,30 @@ public class ClientController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<Client> createClient(@Valid @RequestBody ClientDTO clientDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(clientService.createClient(clientDTO));
+    public ResponseEntity<?> createClient(@Valid @RequestBody ClientDTO clientDTO) {
+        return ApiResponse.success(HttpStatus.OK.value(), "Create client success!", clientService.createClient(clientDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Client>> getAllClients() {
-        return ResponseEntity.ok(clientService.getAllClients());
+    public ResponseEntity<?> getAllClients() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Client> getClientById(@PathVariable Long id) throws DataNotFoundException {
-        return ResponseEntity.ok(clientService.getClientById(id));
+    public ResponseEntity<?> getClientById(@PathVariable Long id) throws DataNotFoundException {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get client by id success!", clientService.getClientById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Client> updateClient(
+    public ResponseEntity<?> updateClient(
             @PathVariable Long id,
             @Valid @RequestBody ClientDTO clientDTO) throws DataNotFoundException {
-        return ResponseEntity.ok(clientService.updateClient(id, clientDTO));
+        return ApiResponse.success(HttpStatus.OK.value(), "Update client by id success!", clientService.updateClient(id, clientDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(@PathVariable Long id) throws DataNotFoundException {
+    public ResponseEntity<?> deleteClient(@PathVariable Long id) throws DataNotFoundException {
         clientService.deleteClient(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success("Client successfully deleted!");
     }
 }

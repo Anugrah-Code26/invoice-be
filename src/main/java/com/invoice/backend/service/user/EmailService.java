@@ -2,8 +2,9 @@ package com.invoice.backend.service.user;
 
 import jakarta.mail.MessagingException;
 
-import java.io.UnsupportedEncodingException;
-
 public interface EmailService {
-    public void sendVerificationEmail(String email, String token) throws MessagingException, UnsupportedEncodingException;
+    void sendHtml(String to, String subject, String htmlContent) throws MessagingException;
+    String loadEmailTemplate(String path, String link);
+    void sendVerificationEmail(String to, String link) throws MessagingException;
+    void sendInvoiceEmail(String to, String subject, String body, byte[] pdfAttachment) throws MessagingException;
 }

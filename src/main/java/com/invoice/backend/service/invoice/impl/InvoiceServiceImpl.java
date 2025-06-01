@@ -16,12 +16,16 @@ import com.invoice.backend.infrastructure.product.repository.ProductRepository;
 import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import com.invoice.backend.service.invoice.InvoiceService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
+import com.invoice.backend.service.invoice.PDFGeneratorService;
+import com.invoice.backend.service.user.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +36,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
+    private final PDFGeneratorService pdfGeneratorService;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -115,14 +121,16 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public Invoice getInvoiceById(Long id) throws DataNotFoundException {
+    public Optional<InvoiceResponseDTO> getInvoiceById(Long id) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
-        return invoiceRepository.findById(id)
+        Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
+
+        return Optional.of(InvoiceResponseDTO.fromEntity(invoice));
     }
 
     @Override
@@ -132,9 +140,25 @@ public class InvoiceServiceImpl implements InvoiceService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
-        Invoice invoice = getInvoiceById(id);
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
+
         invoice.setStatus(status);
         return invoiceRepository.save(invoice);
+    }
+
+    @Override
+    public void sendInvoiceByEmail(Long invoiceId) throws MessagingException {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
+
+        String subject = "Invoice #" + invoice.getInvoiceNumber();
+        String body = "Dear " + invoice.getClient().getName() + ",<br><br>"
+                + "Please find your invoice attached.<br><br>Thank you.";
+
+        byte[] pdf = pdfGeneratorService.generateInvoicePdf(invoice);
+
+        emailService.sendInvoiceEmail(invoice.getClient().getEmail(), subject, body, pdf);
     }
 
     @Override

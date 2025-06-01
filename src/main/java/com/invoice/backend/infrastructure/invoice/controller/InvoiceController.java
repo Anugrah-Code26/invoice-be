@@ -1,13 +1,19 @@
 package com.invoice.backend.infrastructure.invoice.controller;
 
+import com.invoice.backend.common.responses.ApiResponse;
 import com.invoice.backend.entity.invoice.Invoice;
 import com.invoice.backend.infrastructure.invoice.dto.InvoiceDTO;
 import com.invoice.backend.infrastructure.invoice.dto.InvoiceResponseDTO;
+import com.invoice.backend.infrastructure.invoice.repository.InvoiceRepository;
 import com.invoice.backend.service.invoice.InvoiceService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
+import com.invoice.backend.service.invoice.PDFGeneratorService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,44 +25,63 @@ import java.util.List;
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
+    private final PDFGeneratorService pdfGeneratorService;
+    private final InvoiceRepository invoiceRepository;
 
     @PostMapping
-    public ResponseEntity<Invoice> createInvoice(
+    public ResponseEntity<?> createInvoice(
             @Valid @RequestBody InvoiceDTO invoiceDTO) throws DataNotFoundException {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(invoiceService.createInvoice(invoiceDTO));
+        return ApiResponse.success(HttpStatus.OK.value(), "Create invoice success!", invoiceService.createInvoice(invoiceDTO));
+    }
+
+    @PostMapping("/{id}/send-email")
+    public ResponseEntity<String> sendInvoiceToClient(@PathVariable Long id) throws MessagingException {
+        invoiceService.sendInvoiceByEmail(id);
+        return ResponseEntity.ok("Invoice sent");
     }
 
     @GetMapping
-    public ResponseEntity<List<InvoiceResponseDTO>> getAllInvoices() {
-        return ResponseEntity.ok(invoiceService.getAllInvoices());
+    public ResponseEntity<?> getAllInvoices() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<InvoiceResponseDTO>> getInvoicesByStatus(
+    public ResponseEntity<?> getInvoicesByStatus(
             @PathVariable String status) {
-        return ResponseEntity.ok(invoiceService.getInvoicesByStatus(Invoice.Status.valueOf(status.toUpperCase())));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get invoice by status success!", invoiceService.getInvoicesByStatus(Invoice.Status.valueOf(status.toUpperCase())));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Invoice> getInvoiceById(
+    public ResponseEntity<?> getInvoiceById(
             @PathVariable Long id) throws DataNotFoundException {
-        return ResponseEntity.ok(invoiceService.getInvoiceById(id));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get invoice by id success!", invoiceService.getInvoiceById(id));
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
+        byte[] pdfBytes = pdfGeneratorService.generateInvoicePdf(invoice);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice-" + invoice.getInvoiceNumber() + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
     }
 
     @PatchMapping("/{id}/status/{status}")
-    public ResponseEntity<Invoice> updateInvoiceStatus(
+    public ResponseEntity<?> updateInvoiceStatus(
             @PathVariable Long id,
             @PathVariable String status) throws DataNotFoundException {
-        return ResponseEntity.ok(invoiceService.updateInvoiceStatus(
+        return ApiResponse.success(HttpStatus.OK.value(), "Update invoice status success!", invoiceService.updateInvoiceStatus(
                 id,
                 Invoice.Status.valueOf(status.toUpperCase())
         ));
     }
 
     @PostMapping("/process-recurring")
-    public ResponseEntity<Void> processRecurringInvoices() {
+    public ResponseEntity<?> processRecurringInvoices() {
         invoiceService.processRecurringInvoices();
-        return ResponseEntity.ok().build();
+        return ApiResponse.success("Recurring invoice success!");
     }
 }

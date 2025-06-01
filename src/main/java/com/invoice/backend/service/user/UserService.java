@@ -4,14 +4,15 @@ import com.invoice.backend.entity.user.User;
 import com.invoice.backend.infrastructure.user.dto.EmailRequestDTO;
 import com.invoice.backend.infrastructure.user.dto.UserDTO;
 import com.invoice.backend.common.exceptions.EmailAlreadyExistsException;
+import com.invoice.backend.infrastructure.user.dto.UserProfileDTO;
 import jakarta.mail.MessagingException;
 
-import java.io.UnsupportedEncodingException;
-
 public interface UserService {
-    String requestVerification(EmailRequestDTO req) throws MessagingException, UnsupportedEncodingException;
+    User requestRegistration(EmailRequestDTO req) throws MessagingException;
+    User completeRegistration(String token, UserDTO req);
 
-    User registerUser(UserDTO userDTO) throws EmailAlreadyExistsException;
+//    User registerUser(UserDTO userDTO) throws EmailAlreadyExistsException;
     User getUserById(Long id);
     User getUserByEmail(String email);
+    UserProfileDTO updateUserProfile(Long userId, UserProfileDTO userProfileDTO);
 }

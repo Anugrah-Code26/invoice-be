@@ -9,6 +9,7 @@ import lombok.Data;
 public class InvoiceItemResponseDTO {
     private Long id;
     private Long productId;
+    private String productName;
     private String description;
     private Integer quantity;
     private Double unitPrice;
@@ -18,6 +19,7 @@ public class InvoiceItemResponseDTO {
         InvoiceItemResponseDTO dto = new InvoiceItemResponseDTO();
         dto.setId(item.getId());
         dto.setProductId(item.getProduct().getId());
+        dto.setProductName(item.getProduct().getName());
         dto.setDescription(item.getDescription());
         dto.setQuantity(item.getQuantity());
         dto.setUnitPrice(item.getUnitPrice());

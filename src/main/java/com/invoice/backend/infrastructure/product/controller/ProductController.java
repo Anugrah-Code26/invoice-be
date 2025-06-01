@@ -1,5 +1,6 @@
 package com.invoice.backend.infrastructure.product.controller;
 
+import com.invoice.backend.common.responses.ApiResponse;
 import com.invoice.backend.entity.product.Product;
 import com.invoice.backend.entity.user.User;
 import com.invoice.backend.infrastructure.product.dto.ProductDTO;
@@ -21,39 +22,38 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(
+    public ResponseEntity<?> createProduct(
             @Valid @RequestBody ProductDTO productDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productService.createProduct(productDTO));
+        return ApiResponse.success(HttpStatus.OK.value(), "Create product success!", productService.createProduct(productDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllActiveProducts() {
-        return ResponseEntity.ok(productService.getAllActiveProducts());
+    public ResponseEntity<?> getAllActiveProducts() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all active products success!", productService.getAllActiveProducts());
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<?> getAllProducts() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all product success!", productService.getAllProducts());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(
+    public ResponseEntity<?> getProductById(
             @PathVariable Long id) throws DataNotFoundException {
-        return ResponseEntity.ok(productService.getProductById(id));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get product by id success!", productService.getProductById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductDTO productDTO) throws DataNotFoundException {
-        return ResponseEntity.ok(productService.updateProduct(id, productDTO));
+        return ApiResponse.success(HttpStatus.OK.value(), "Update product by id success!", productService.updateProduct(id, productDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> softDeleteProduct(
+    public ResponseEntity<?> softDeleteProduct(
             @PathVariable Long id) throws DataNotFoundException {
         productService.softDeleteProduct(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.success("Soft delete product success!");
     }
 }

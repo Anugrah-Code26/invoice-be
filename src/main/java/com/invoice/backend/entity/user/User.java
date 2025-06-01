@@ -18,6 +18,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -41,9 +42,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @NotNull(message = "Password is mandatory")
     @Size(min = 6, message = "Password must be at least 6 characters")
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Size(max = 100, message = "Name can have at most 100 characters")
@@ -62,8 +62,8 @@ public class User {
     @Column(name = "verification_token")
     private String verificationToken;
 
-    @Column(name = "token_expiry_date")
-    private Instant tokenExpiryDate;
+    @Column(name = "verification_token_expiry")
+    private LocalDateTime verificationTokenExpiry;
 
     @Column(nullable = false)
     private Boolean deleted = false;
@@ -106,9 +106,4 @@ public class User {
     @JsonManagedReference
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Invoice> invoices = new HashSet<>();
-
-    public void generateVerificationToken() {
-        this.verificationToken = UUID.randomUUID().toString();
-        this.tokenExpiryDate = Instant.now().plus(24, ChronoUnit.HOURS);
-    }
 }

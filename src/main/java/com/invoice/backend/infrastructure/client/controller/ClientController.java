@@ -24,14 +24,18 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getClients(@RequestParam(required = false) String search) {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get client success!", clientService.searchClients(search));
+    public ResponseEntity<?> searchClients(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNumber
+    ) {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get client success!", clientService.searchClients(name, email, phoneNumber));
     }
 
-//    @GetMapping
-//    public ResponseEntity<?> getAllClients() {
-//        return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
-//    }
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllClients() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getClientById(@PathVariable Long id) throws DataNotFoundException {

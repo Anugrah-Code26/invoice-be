@@ -4,14 +4,19 @@ import com.invoice.backend.entity.client.Client;
 import com.invoice.backend.entity.user.User;
 import com.invoice.backend.infrastructure.auth.Claims;
 import com.invoice.backend.infrastructure.client.dto.ClientDTO;
+import com.invoice.backend.infrastructure.client.dto.ClientResponseDTO;
 import com.invoice.backend.infrastructure.client.repository.ClientRepository;
 import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import com.invoice.backend.service.client.ClientService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.invoice.backend.service.client.specification.ClientSpecification.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +43,16 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<Client> searchClients(String query) {
-        if (query == null || query.isBlank()) {
-            return clientRepository.findAll();
-        }
-        return clientRepository.searchClients(query);
+    public List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber) {
+        Specification<Client> spec = Specification.where(hasName(name))
+                .and(hasEmail(email))
+                .and(hasPhoneNumber(phoneNumber));
+
+        List<Client> clients = clientRepository.findAll(spec);
+
+        return clients.stream()
+                .map(ClientResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override

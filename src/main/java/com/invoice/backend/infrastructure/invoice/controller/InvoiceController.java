@@ -8,6 +8,7 @@ import com.invoice.backend.infrastructure.invoice.repository.InvoiceRepository;
 import com.invoice.backend.service.invoice.InvoiceService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import com.invoice.backend.service.invoice.PDFGeneratorService;
+import com.itextpdf.text.DocumentException;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,15 +36,25 @@ public class InvoiceController {
     }
 
     @PostMapping("/{id}/send-email")
-    public ResponseEntity<String> sendInvoiceToClient(@PathVariable Long id) throws MessagingException {
+    public ResponseEntity<?> sendInvoiceToClient(@PathVariable Long id) throws MessagingException, DocumentException {
         invoiceService.sendInvoiceByEmail(id);
-        return ResponseEntity.ok("Invoice sent");
+        return ApiResponse.success("Invoice sent!");
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllInvoices() {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
+    public ResponseEntity<?> getInvoices(
+            @RequestParam(required = false) String invoiceNumber,
+            @RequestParam(required = false) String clientName,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String status
+    ) {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get invoices success!", invoiceService.searchInvoices(invoiceNumber, clientName, date, status));
     }
+
+//    @GetMapping
+//    public ResponseEntity<?> getAllInvoices() {
+//        return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
+//    }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getInvoicesByStatus(
@@ -58,7 +69,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) throws DocumentException {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
         byte[] pdfBytes = pdfGeneratorService.generateInvoicePdf(invoice);

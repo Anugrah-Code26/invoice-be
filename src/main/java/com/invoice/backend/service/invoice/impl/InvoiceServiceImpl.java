@@ -17,9 +17,12 @@ import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import com.invoice.backend.service.invoice.InvoiceService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import com.invoice.backend.service.invoice.PDFGeneratorService;
+import com.invoice.backend.service.invoice.specification.InvoiceSpecification;
 import com.invoice.backend.service.user.EmailService;
+import com.itextpdf.text.DocumentException;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,6 +99,19 @@ public class InvoiceServiceImpl implements InvoiceService {
         return item;
     }
 
+    public List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status) {
+        Specification<Invoice> spec = Specification
+                .where(InvoiceSpecification.hasInvoiceNumber(invoiceNumber))
+                .and(InvoiceSpecification.hasClientName(clientName))
+                .and(InvoiceSpecification.hasDate(date))
+                .and(InvoiceSpecification.hasStatus(status));
+
+        List<Invoice> invoices = invoiceRepository.findAll(spec);
+        return invoices.stream()
+                .map(InvoiceResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public List<InvoiceResponseDTO> getAllInvoices() {
         Long userId = Claims.getUserIdFromJwt();
@@ -153,12 +169,30 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
 
         String subject = "Invoice #" + invoice.getInvoiceNumber();
-        String body = "Dear " + invoice.getClient().getName() + ",<br><br>"
-                + "Please find your invoice attached.<br><br>Thank you.";
+        String body = "<p>Dear " + invoice.getClient().getName() + ",</p>" +
+                "<p>Thank you for your business. Please find attached the invoice for your recent transaction.</p>" +
+                "<p><strong>Invoice Number:</strong> " + invoice.getInvoiceNumber() + "<br>" +
+                "<strong>Issue Date:</strong> " + invoice.getIssueDate() + "<br>" +
+                "<strong>Due Date:</strong> " + invoice.getDueDate() + "</p>" +
+                "<p>If you have any questions, feel free to contact us.</p>" +
+                "<p>Best regards,<br>MyInvoice</p>";
 
-        byte[] pdf = pdfGeneratorService.generateInvoicePdf(invoice);
+        byte[] pdfBytes;
+        try {
+            pdfBytes = pdfGeneratorService.generateInvoicePdf(invoice);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate invoice PDF", e);
+        }
 
-        emailService.sendInvoiceEmail(invoice.getClient().getEmail(), subject, body, pdf);
+        String filename = "Invoice-" + invoice.getInvoiceNumber() + ".pdf";
+
+        emailService.sendInvoiceEmail(
+                invoice.getClient().getEmail(),
+                subject,
+                body,
+                pdfBytes,
+                filename
+        );
     }
 
     @Override

@@ -28,9 +28,18 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllActiveProducts() {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get all active products success!", productService.getAllActiveProducts());
+    public ResponseEntity<?> getProducts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice
+    ) {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get product success!", productService.findProducts(search, minPrice, maxPrice));
     }
+
+//    @GetMapping
+//    public ResponseEntity<?> getAllActiveProducts() {
+//        return ApiResponse.success(HttpStatus.OK.value(), "Get all active products success!", productService.getAllActiveProducts());
+//    }
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllProducts() {

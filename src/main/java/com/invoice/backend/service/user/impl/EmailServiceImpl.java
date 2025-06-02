@@ -3,6 +3,7 @@ package com.invoice.backend.service.user.impl;
 import com.invoice.backend.service.user.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
@@ -51,7 +52,7 @@ public class EmailServiceImpl implements EmailService {
         sendHtml(to, subject, content);
     }
 
-    public void sendInvoiceEmail(String to, String subject, String body, byte[] pdfAttachment) throws MessagingException {
+    public void sendInvoiceEmail(String to, String subject, String body, byte[] pdfAttachment, String filename) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
@@ -60,9 +61,11 @@ public class EmailServiceImpl implements EmailService {
         helper.setText(body, true);
 
         if (pdfAttachment != null) {
-            helper.addAttachment("invoice.pdf", new ByteArrayResource(pdfAttachment));
+            ByteArrayDataSource dataSource = new ByteArrayDataSource(pdfAttachment, "application/pdf");
+            helper.addAttachment(filename, dataSource);
         }
 
         mailSender.send(message);
     }
+
 }

@@ -8,7 +8,10 @@ import com.invoice.backend.infrastructure.product.repository.ProductRepository;
 import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import com.invoice.backend.service.product.ProductService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
+import com.invoice.backend.service.product.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,14 +40,25 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllActiveProducts() {
-        Long userId = Claims.getUserIdFromJwt();
+    public List<Product> findProducts(String search, Double minPrice, Double maxPrice) {
+        Specification<Product> spec = Specification.where(ProductSpecification.containsTextInNameOrDescription(search))
+                .and(ProductSpecification.priceGreaterThanOrEqual(minPrice))
+                .and(ProductSpecification.priceLessThanOrEqual(maxPrice))
+                .and((root, query, cb) -> cb.isFalse(root.get("deleted")));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
-
-        return productRepository.findActiveByUserId(user.getId());
+        return productRepository.findAll(spec);
     }
+
+
+//    @Override
+//    public List<Product> getAllActiveProducts() {
+//        Long userId = Claims.getUserIdFromJwt();
+//
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new DataNotFoundException("User not found"));
+//
+//        return productRepository.findActiveByUserId(user.getId());
+//    }
 
     @Override
     public List<Product> getAllProducts() {

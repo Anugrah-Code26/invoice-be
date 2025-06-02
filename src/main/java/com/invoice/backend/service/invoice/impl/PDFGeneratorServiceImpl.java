@@ -3,6 +3,10 @@ package com.invoice.backend.service.invoice.impl;
 import com.invoice.backend.entity.invoice.Invoice;
 import com.invoice.backend.entity.invoice.InvoiceItem;
 import com.invoice.backend.service.invoice.PDFGeneratorService;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -17,55 +21,68 @@ import java.io.IOException;
 public class PDFGeneratorServiceImpl implements PDFGeneratorService {
 
     @Override
-    public byte[] generateInvoicePdf(Invoice invoice) {
-        try (PDDocument doc = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            PDPage page = new PDPage(PDRectangle.A4);
-            doc.addPage(page);
+    public byte[] generateInvoicePdf(Invoice invoice) throws DocumentException {
+        Document document = new Document(PageSize.A4, 50, 50, 50, 50);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, out);
 
-            PDPageContentStream content = new PDPageContentStream(doc, page);
+        document.open();
 
-            content.setFont(PDType1Font.HELVETICA_BOLD, 16);
-            content.beginText();
-            content.newLineAtOffset(50, 750);
-            content.showText("Invoice #" + invoice.getInvoiceNumber());
-            content.endText();
+        // Company Header
+        Font titleFont = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD);
+        Paragraph title = new Paragraph("INVOICE", titleFont);
+        title.setAlignment(Element.ALIGN_RIGHT);
+        document.add(title);
 
-            content.setFont(PDType1Font.HELVETICA, 12);
-            int y = 720;
+        // Company Info
+        Paragraph company = new Paragraph("MyInvoice\nEmail: myinvoice.info@company.com\nPhone: +1 234 567 890\nAddress: MyInvoice Street");
+        company.setAlignment(Element.ALIGN_RIGHT);
+        document.add(company);
 
-            content.beginText();
-            content.newLineAtOffset(50, y);
-            content.showText("Client: " + invoice.getClient().getName());
-            content.newLineAtOffset(0, -15);
-            content.showText("Email: " + invoice.getClient().getEmail());
-            content.newLineAtOffset(0, -15);
-            content.showText("Issue Date: " + invoice.getIssueDate());
-            content.newLineAtOffset(0, -15);
-            content.showText("Due Date: " + invoice.getDueDate());
-            content.endText();
+        document.add(new Paragraph("\n"));
 
-            y -= 80;
+        // Client Info
+        Font sectionFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+        document.add(new Paragraph("Bill To:", sectionFont));
+        document.add(new Paragraph(invoice.getClient().getName()));
+        document.add(new Paragraph(invoice.getClient().getEmail()));
+        document.add(new Paragraph(invoice.getClient().getAddress()));
+        document.add(new Paragraph("\n"));
 
-            for (InvoiceItem item : invoice.getItems()) {
-                content.beginText();
-                content.newLineAtOffset(50, y);
-                content.showText(item.getProduct().getName() + " - $" + item.getUnitPrice() + " x " + item.getQuantity() + " = $" + item.getTotalPrice());
-                content.endText();
-                y -= 20;
-            }
+        // Invoice Details
+        PdfPTable table = new PdfPTable(4);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(10f);
+        table.setSpacingAfter(10f);
+        table.setWidths(new float[]{4, 2, 1, 2});
 
-            content.beginText();
-            content.newLineAtOffset(50, y - 10);
-            content.setFont(PDType1Font.HELVETICA_BOLD, 14);
-            content.showText("Total: $" + invoice.getTotalAmount());
-            content.endText();
+        Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+        addTableHeader(table, headerFont, "Product", "Unit Price", "Qty", "Total");
 
-            content.close();
-            doc.save(out);
-            return out.toByteArray();
+        for (InvoiceItem item : invoice.getItems()) {
+            table.addCell(item.getProduct().getName());
+            table.addCell("$" + String.format("%.2f", item.getUnitPrice()));
+            table.addCell(String.valueOf(item.getQuantity()));
+            table.addCell("$" + String.format("%.2f", item.getTotalPrice()));
+        }
 
-        } catch (IOException e) {
-            throw new RuntimeException("PDF generation failed", e);
+        document.add(table);
+
+        // Total Amount
+        Paragraph total = new Paragraph("Total: $" + String.format("%.2f", invoice.getTotalAmount()), sectionFont);
+        total.setAlignment(Element.ALIGN_RIGHT);
+        document.add(total);
+
+        document.close();
+        return out.toByteArray();
+    }
+
+    private void addTableHeader(PdfPTable table, Font font, String... headers) {
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(header, font));
+            cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
         }
     }
 }

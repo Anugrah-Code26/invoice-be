@@ -9,8 +9,8 @@ import java.util.List;
 
 @Data
 public class InvoiceDTO {
-    @NotNull(message = "Client ID is required")
     private Long id;
+    @NotNull(message = "Client ID is required")
     private Long clientId;
     private String invoiceNumber;
     private Double totalAmount;

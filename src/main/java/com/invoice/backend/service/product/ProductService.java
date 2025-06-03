@@ -10,7 +10,7 @@ import java.util.List;
 public interface ProductService {
     Product createProduct(ProductDTO productDTO);
     List<Product> findProducts(String search, Double minPrice, Double maxPrice);
-//    List<Product> getAllActiveProducts();
+    List<Product> getAllActiveProducts();
     List<Product> getAllProducts();
     Product getProductById(Long id) throws DataNotFoundException;
     Product updateProduct(Long id, ProductDTO productDTO) throws DataNotFoundException;

@@ -51,10 +51,10 @@ public class InvoiceController {
         return ApiResponse.success(HttpStatus.OK.value(), "Get invoices success!", invoiceService.searchInvoices(invoiceNumber, clientName, date, status));
     }
 
-//    @GetMapping
-//    public ResponseEntity<?> getAllInvoices() {
-//        return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
-//    }
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllInvoices() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
+    }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getInvoicesByStatus(
@@ -88,6 +88,12 @@ public class InvoiceController {
                 id,
                 Invoice.Status.valueOf(status.toUpperCase())
         ));
+    }
+
+    @PostMapping("/process-overdue")
+    public ResponseEntity<?> updateStatusToOverDue() {
+        invoiceService.updateStatusToOverDue();
+        return ApiResponse.success("Update Overdue invoice success!");
     }
 
     @PostMapping("/process-recurring")

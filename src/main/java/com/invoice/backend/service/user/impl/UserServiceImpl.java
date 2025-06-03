@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
     private String frontendUrl;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = false)
     public User requestRegistration(EmailRequestDTO req) throws MessagingException {
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already exists");

@@ -18,6 +18,7 @@ public interface InvoiceService {
     List<InvoiceResponseDTO> getInvoicesByStatus(Invoice.Status status);
     Optional<InvoiceResponseDTO> getInvoiceById(Long id) throws DataNotFoundException;
     Invoice updateInvoiceStatus(Long id, Invoice.Status status) throws DataNotFoundException;
+    void updateStatusToOverDue();
     void sendInvoiceByEmail(Long invoiceId) throws MessagingException, DocumentException;
     void processRecurringInvoices();
 }

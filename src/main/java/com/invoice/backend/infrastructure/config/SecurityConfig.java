@@ -65,8 +65,9 @@ public class SecurityConfig {
                         .requestMatchers("/error/**").permitAll()
                         .requestMatchers("/api/v1/auth/register").permitAll()
                         .requestMatchers("/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/admin/**").permitAll()
-                        .requestMatchers("/api/v1/user/**").permitAll()
+                        .requestMatchers("/api/v1/invoices/process-overdue").permitAll()
+                        .requestMatchers("/api/v1/invoices/process-recurring").permitAll()
+//                        .requestMatchers("/api/v1/user/**").permitAll()
 
                         // Allow static files
                         .anyRequest().authenticated())

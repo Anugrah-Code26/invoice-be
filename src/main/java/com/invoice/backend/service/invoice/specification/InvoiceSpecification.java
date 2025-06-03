@@ -5,6 +5,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class InvoiceSpecification {
 
+    public static Specification<Invoice> hasUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
     public static Specification<Invoice> hasInvoiceNumber(String invoiceNumber) {
         return (root, query, cb) ->
                 invoiceNumber == null ? null : cb.like(cb.lower(root.get("invoiceNumber")), "%" + invoiceNumber.toLowerCase() + "%");

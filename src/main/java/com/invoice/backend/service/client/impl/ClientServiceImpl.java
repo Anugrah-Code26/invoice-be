@@ -1,5 +1,6 @@
 package com.invoice.backend.service.client.impl;
 
+import com.invoice.backend.common.exceptions.UnauthorizedException;
 import com.invoice.backend.entity.client.Client;
 import com.invoice.backend.entity.user.User;
 import com.invoice.backend.infrastructure.auth.Claims;
@@ -10,9 +11,12 @@ import com.invoice.backend.infrastructure.user.repository.UserRepository;
 import com.invoice.backend.service.client.ClientService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.mapping.Collection;
+import org.hibernate.sql.ast.tree.expression.Collation;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,11 +48,17 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber) {
-        Specification<Client> spec = Specification.where(hasName(name))
+        Long userId = Claims.getUserIdFromJwt();
+
+        Specification<Client> spec = Specification.where(hasUserId(userId))
+                .and(hasName(name))
                 .and(hasEmail(email))
                 .and(hasPhoneNumber(phoneNumber));
 
         List<Client> clients = clientRepository.findAll(spec);
+        if (clients.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         return clients.stream()
                 .map(ClientResponseDTO::fromEntity)
@@ -57,12 +67,13 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public List<Client> getAllClients() {
-        Long userId = Claims.getUserIdFromJwt();
+        String role = Claims.getRoleFromJwt();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        if (!"SUPER_ADMIN".equals(role)){
+            throw new UnauthorizedException("Unauthorized!");
+        }
 
-        return clientRepository.findByUserId(user.getId());
+        return clientRepository.findAll();
     }
 
     @Override
@@ -84,6 +95,11 @@ public class ClientServiceImpl implements ClientService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
 
+        Client checkClient = clientRepository.findByIdAndUserId(id, user.getId());
+        if (checkClient == null) {
+            throw new UnauthorizedException("Unauthorized!");
+        }
+
         Client client = getClientById(id);
         client.setName(clientDTO.getName());
         client.setAddress(clientDTO.getAddress());
@@ -100,6 +116,11 @@ public class ClientServiceImpl implements ClientService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found"));
+
+        Client checkClient = clientRepository.findByIdAndUserId(id, user.getId());
+        if (checkClient == null) {
+            throw new UnauthorizedException("Unauthorized!");
+        }
 
         Client client = getClientById(id);
         clientRepository.delete(client);

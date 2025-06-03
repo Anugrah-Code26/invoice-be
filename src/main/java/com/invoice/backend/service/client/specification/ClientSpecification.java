@@ -5,6 +5,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class ClientSpecification {
 
+    public static Specification<Client> hasUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
     public static Specification<Client> hasName(String name) {
         return (root, query, cb) -> {
             if (name == null || name.isEmpty()) return null;

@@ -30,19 +30,30 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
 
         // Company Header
         Font titleFont = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD);
-        Paragraph title = new Paragraph("INVOICE", titleFont);
+        Paragraph title = new Paragraph(invoice.getInvoiceNumber(), titleFont);
         title.setAlignment(Element.ALIGN_RIGHT);
         document.add(title);
 
+        // Invoice Status
+        Font sectionFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+        Paragraph status = new Paragraph("Status: " + invoice.getStatus().name(), sectionFont);
+        status.setSpacingBefore(10f);
+        status.setAlignment(Element.ALIGN_RIGHT);
+        document.add(status);
+
         // Company Info
-        Paragraph company = new Paragraph("MyInvoice\nEmail: myinvoice.info@company.com\nPhone: +1 234 567 890\nAddress: MyInvoice Street");
+        Paragraph company = new Paragraph(
+                invoice.getUser().getName() +
+                "\nEmail: " + invoice.getUser().getEmail() +
+                "\nPhone: " + invoice.getUser().getPhoneNumber() +
+                "\nAddress: " + invoice.getUser().getAddress()
+        );
         company.setAlignment(Element.ALIGN_RIGHT);
         document.add(company);
 
         document.add(new Paragraph("\n"));
 
         // Client Info
-        Font sectionFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
         document.add(new Paragraph("Bill To:", sectionFont));
         document.add(new Paragraph(invoice.getClient().getName()));
         document.add(new Paragraph(invoice.getClient().getEmail()));
@@ -72,6 +83,11 @@ public class PDFGeneratorServiceImpl implements PDFGeneratorService {
         Paragraph total = new Paragraph("Total: $" + String.format("%.2f", invoice.getTotalAmount()), sectionFont);
         total.setAlignment(Element.ALIGN_RIGHT);
         document.add(total);
+
+        // Company Info
+        Paragraph myInvoice = new Paragraph("This invoice is sent by MyInvoice\nEmail: myinvoice.info@company.com\nPhone: +1 234 567 890\nAddress: MyInvoice Street");
+        company.setAlignment(Element.ALIGN_RIGHT);
+        document.add(myInvoice);
 
         document.close();
         return out.toByteArray();

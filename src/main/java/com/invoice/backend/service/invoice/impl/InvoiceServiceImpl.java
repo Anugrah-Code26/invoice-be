@@ -1,5 +1,6 @@
 package com.invoice.backend.service.invoice.impl;
 
+import com.invoice.backend.common.exceptions.UnauthorizedException;
 import com.invoice.backend.common.utils.InvoiceCodeGenerator;
 import com.invoice.backend.entity.client.Client;
 import com.invoice.backend.entity.invoice.Invoice;
@@ -19,19 +20,21 @@ import com.invoice.backend.common.exceptions.DataNotFoundException;
 import com.invoice.backend.service.invoice.PDFGeneratorService;
 import com.invoice.backend.service.invoice.specification.InvoiceSpecification;
 import com.invoice.backend.service.user.EmailService;
-import com.itextpdf.text.DocumentException;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements InvoiceService {
@@ -57,17 +60,30 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setUser(user);
         invoice.setClient(client);
 
-        String invoiceCode = InvoiceCodeGenerator.generateInvoiceCode(userId, LocalDate.now());
+        String invoiceCode = InvoiceCodeGenerator.generateInvoiceCode(userId, client.getId(), LocalDate.now());
         invoice.setInvoiceNumber(invoiceCode);
 
         invoice.setIssueDate(LocalDate.now());
-        invoice.setDueDate(calculateDueDate(LocalDate.now(), Invoice.PaymentTerms.valueOf(req.getPaymentTerms())));
-        invoice.setPaymentTerms(Invoice.PaymentTerms.valueOf(req.getPaymentTerms()));
-        invoice.setStatus(req.getStatus() != null ? req.getStatus() : Invoice.Status.PENDING);
-        invoice.setIsRecurring(true);
-        invoice.setIsRecurring(req.getIsRecurring());
+
+        Invoice.PaymentTerms paymentTerms;
+        try {
+            paymentTerms = Invoice.PaymentTerms.valueOf(req.getPaymentTerms());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new IllegalArgumentException("Invalid payment term: " + req.getPaymentTerms());
+        }
+
+        invoice.setPaymentTerms(paymentTerms);
+        invoice.setDueDate(calculateDueDate(LocalDate.now(), paymentTerms));
+        invoice.setStatus(Invoice.Status.PENDING);
 //        invoice.setRecurringSchedule(req.getRecurringSchedule());
-        invoice.setNextRecurringDate(calculateNextRecurringDate(LocalDate.now(), Invoice.PaymentTerms.valueOf(req.getPaymentTerms())));
+
+        if (paymentTerms == Invoice.PaymentTerms.TODAY) {
+            invoice.setIsRecurring(false);
+            invoice.setNextRecurringDate(null);
+        } else {
+            invoice.setIsRecurring(true);
+            invoice.setNextRecurringDate(calculateNextRecurringDate(LocalDate.now(), paymentTerms));
+        }
 
         Set<InvoiceItem> items = req.getItems().stream()
                 .map(itemReq -> createInvoiceItem(itemReq, invoice))
@@ -82,12 +98,16 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         return invoiceRepository.save(invoice);
     }
-
+    
     private InvoiceItem createInvoiceItem(InvoiceItemDTO req, Invoice invoice) throws DataNotFoundException {
+        Long userId = Claims.getUserIdFromJwt();
+
         InvoiceItem item = new InvoiceItem();
 
-        Product product = productRepository.findById(req.getProductId())
-                .orElseThrow(() -> new DataNotFoundException("Product not found"));
+        Product product = productRepository.findByIdAndUserId(req.getProductId(), userId);
+        if (product == null) {
+            throw new UnauthorizedException("Unauthorized Product or Product not found!");
+        }
 
         item.setInvoice(invoice);
         item.setProduct(product);
@@ -100,8 +120,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     public List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status) {
+        Long userId = Claims.getUserIdFromJwt();
+
         Specification<Invoice> spec = Specification
-                .where(InvoiceSpecification.hasInvoiceNumber(invoiceNumber))
+                .where(InvoiceSpecification.hasUserId(userId))
+                .and(InvoiceSpecification.hasInvoiceNumber(invoiceNumber))
                 .and(InvoiceSpecification.hasClientName(clientName))
                 .and(InvoiceSpecification.hasDate(date))
                 .and(InvoiceSpecification.hasStatus(status));
@@ -114,10 +137,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public List<InvoiceResponseDTO> getAllInvoices() {
-        Long userId = Claims.getUserIdFromJwt();
+        String role = Claims.getRoleFromJwt();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        if (!"SUPER_ADMIN".equals(role)){
+            throw new UnauthorizedException("Unauthorized!");
+        }
 
         return invoiceRepository.findAll().stream()
                 .map(InvoiceResponseDTO::fromEntity)
@@ -128,8 +152,10 @@ public class InvoiceServiceImpl implements InvoiceService {
     public List<InvoiceResponseDTO> getInvoicesByStatus(Invoice.Status status) {
         Long userId = Claims.getUserIdFromJwt();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        List<Invoice> checkInvoice = invoiceRepository.findByUserIdAndStatus(userId, status);
+        if (checkInvoice == null) {
+            throw new UnauthorizedException("Unauthorized Invoice or Invoice not found!");
+        }
 
         return invoiceRepository.findByStatus(status).stream()
                 .map(InvoiceResponseDTO::fromEntity)
@@ -140,21 +166,22 @@ public class InvoiceServiceImpl implements InvoiceService {
     public Optional<InvoiceResponseDTO> getInvoiceById(Long id) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        Optional<InvoiceResponseDTO> invoice = invoiceRepository.findByIdAndUserId(id, userId);
+        if (invoice.isEmpty()) {
+            throw new UnauthorizedException("Unauthorized Invoice or Invoice not found!");
+        }
 
-        Invoice invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
-
-        return Optional.of(InvoiceResponseDTO.fromEntity(invoice));
+        return invoice;
     }
 
     @Override
     public Invoice updateInvoiceStatus(Long id, Invoice.Status status) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found"));
+        Optional<InvoiceResponseDTO> checkInvoice = invoiceRepository.findByIdAndUserId(id, userId);
+        if (checkInvoice.isEmpty()) {
+            throw new UnauthorizedException("Unauthorized Invoice!");
+        }
 
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
@@ -164,7 +191,30 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public void updateStatusToOverDue() {
+        List<Invoice> overdueInvoices = invoiceRepository
+                .findByDueDateLessThanEqualAndStatus(LocalDate.now(), Invoice.Status.PENDING);
+
+        if (overdueInvoices != null && !overdueInvoices.isEmpty()) {
+            for (Invoice invoice : overdueInvoices) {
+                invoice.setStatus(Invoice.Status.OVERDUE);
+            }
+            invoiceRepository.saveAll(overdueInvoices);
+            System.out.println("Updated " + overdueInvoices.size() + " invoices to OVERDUE.");
+        } else {
+            System.out.println("No overdue invoices found.");
+        }
+    }
+
+    @Override
     public void sendInvoiceByEmail(Long invoiceId) throws MessagingException {
+        Long userId = Claims.getUserIdFromJwt();
+
+        Optional<InvoiceResponseDTO> checkInvoice = invoiceRepository.findByIdAndUserId(invoiceId, userId);
+        if (checkInvoice.isEmpty()) {
+            throw new UnauthorizedException("Unauthorized Invoice!");
+        }
+
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new DataNotFoundException("Invoice not found"));
 
@@ -200,32 +250,44 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<Invoice> recurringInvoices = invoiceRepository
                 .findByIsRecurringTrueAndNextRecurringDateLessThanEqual(LocalDate.now());
 
+        log.info("Found {} recurring invoices to process", recurringInvoices.size());
+
         for (Invoice template : recurringInvoices) {
-            Invoice newInvoice = new Invoice();
-            newInvoice.setUser(template.getUser());
-            newInvoice.setClient(template.getClient());
-            newInvoice.setInvoiceNumber(generateNewInvoiceNumber(template.getInvoiceNumber()));
-            newInvoice.setIssueDate(LocalDate.now());
-            newInvoice.setDueDate(calculateDueDate(LocalDate.now(), template.getPaymentTerms()));
-            newInvoice.setPaymentTerms(template.getPaymentTerms());
-            newInvoice.setStatus(Invoice.Status.PENDING);
+            try {
+                Invoice newInvoice = new Invoice();
+                newInvoice.setUser(template.getUser());
+                newInvoice.setClient(template.getClient());
+                newInvoice.setInvoiceNumber(generateNewInvoiceNumber(
+                        template.getUser().getId(),
+                        template.getClient().getId()
+                ));
+                newInvoice.setIssueDate(LocalDate.now());
+                newInvoice.setPaymentTerms(template.getPaymentTerms());
+                newInvoice.setDueDate(calculateDueDate(LocalDate.now(), template.getPaymentTerms()));
+                newInvoice.setStatus(Invoice.Status.PENDING);
+                newInvoice.setIsRecurring(true);
+//                newInvoice.setRecurringSchedule(template.getRecurringSchedule());
+                newInvoice.setNextRecurringDate(
+                        calculateNextRecurringDate(LocalDate.now(), template.getPaymentTerms())
+                );
 
-            Set<InvoiceItem> invoiceItems = template.getItems().stream()
-                    .map(original -> copyInvoiceItem(original, newInvoice))
-                    .collect(Collectors.toSet());
+                Set<InvoiceItem> invoiceItems = template.getItems() == null ?
+                        new HashSet<>() :
+                        template.getItems().stream()
+                                .map(original -> copyInvoiceItem(original, newInvoice))
+                                .collect(Collectors.toSet());
 
-            newInvoice.setItems(invoiceItems);
-            newInvoice.setTotalAmount(template.getTotalAmount());
-            newInvoice.setIsRecurring(true);
-//            newInvoice.setRecurringSchedule(template.getRecurringSchedule());
-            newInvoice.setNextRecurringDate(
-                    calculateNextRecurringDate(LocalDate.now(), template.getPaymentTerms())
-            );
+                newInvoice.setItems(invoiceItems);
+                newInvoice.setTotalAmount(template.getTotalAmount());
 
-            invoiceRepository.save(newInvoice);
+                invoiceRepository.save(newInvoice);
 
-            template.setNextRecurringDate(newInvoice.getNextRecurringDate());
-            invoiceRepository.save(template);
+                template.setIsRecurring(false);
+                invoiceRepository.save(template);
+                log.info("Processed recurring invoice template ID: {}", template.getId());
+            } catch (Exception e) {
+                log.error("Failed to process recurring invoice template ID: {}", template.getId(), e);
+            }
         }
     }
 
@@ -240,9 +302,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         return copy;
     }
 
-    private String generateNewInvoiceNumber(String originalNumber) {
-        // Implementation for generating new invoice numbers
-        return originalNumber + "-R";
+    private String generateNewInvoiceNumber(Long userId, Long clientId) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new DataNotFoundException("Client not found"));
+
+        String invoiceCode = InvoiceCodeGenerator.generateInvoiceCode(userId, client.getId(), LocalDate.now());
+        return invoiceCode + "-R";
     }
 
     private LocalDate calculateDueDate(LocalDate issueDate, Invoice.PaymentTerms paymentTerms) {
@@ -250,6 +315,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             return issueDate.plusMonths(1);
         } else if (paymentTerms == Invoice.PaymentTerms.WEEKLY) {
             return issueDate.plusWeeks(1);
+        } else if (paymentTerms == Invoice.PaymentTerms.TODAY) {
+            return issueDate.plusDays(1);
         }
         return issueDate.plusMonths(1);
     }

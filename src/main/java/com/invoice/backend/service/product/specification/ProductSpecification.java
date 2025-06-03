@@ -5,6 +5,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {
 
+    public static Specification<Product> hasUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
     public static Specification<Product> containsTextInNameOrDescription(String text) {
         return (root, query, builder) -> {
             if (text == null || text.isEmpty()) {

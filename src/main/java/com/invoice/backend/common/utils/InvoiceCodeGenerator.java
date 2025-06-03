@@ -8,10 +8,10 @@ public class InvoiceCodeGenerator {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    public static String generateInvoiceCode(Long userId, LocalDate orderDate) {
+    public static String generateInvoiceCode(Long userId, Long clientId, LocalDate orderDate) {
         String formattedDate = orderDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String randomString = generateRandomAlphanumeric();
-        return String.format("INV-%d-%s-%s", userId, formattedDate, randomString);
+        return String.format("INV-%d-%d-%s-%s", userId, clientId, formattedDate, randomString);
     }
 
     private static String generateRandomAlphanumeric() {

@@ -36,10 +36,10 @@ public class ProductController {
         return ApiResponse.success(HttpStatus.OK.value(), "Get product success!", productService.findProducts(search, minPrice, maxPrice));
     }
 
-//    @GetMapping
-//    public ResponseEntity<?> getAllActiveProducts() {
-//        return ApiResponse.success(HttpStatus.OK.value(), "Get all active products success!", productService.getAllActiveProducts());
-//    }
+    @GetMapping("/active/all")
+    public ResponseEntity<?> getAllActiveProducts() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all active products success!", productService.getAllActiveProducts());
+    }
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllProducts() {

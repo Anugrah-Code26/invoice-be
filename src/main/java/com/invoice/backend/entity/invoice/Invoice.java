@@ -52,7 +52,7 @@ public class Invoice {
     private LocalDate dueDate;
 
     public enum PaymentTerms {
-        MONTHLY, WEEKLY
+        MONTHLY, WEEKLY, TODAY
     }
 
     @NotNull

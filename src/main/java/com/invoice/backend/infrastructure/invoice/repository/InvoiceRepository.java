@@ -18,6 +18,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query("SELECT i FROM Invoice i WHERE i.id = :id AND i.user.id = :userId")
     Optional<InvoiceResponseDTO> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
+    @Query("SELECT i FROM Invoice i WHERE i.id = :id AND i.user.id = :userId")
+    Optional<Invoice> findByIdAndUserIdOpt(@Param("id") Long id, @Param("userId") Long userId);
+
     @Query("SELECT i FROM Invoice i WHERE i.status = :status")
     List<Invoice> findByStatus(@Param("status") Status status);
 

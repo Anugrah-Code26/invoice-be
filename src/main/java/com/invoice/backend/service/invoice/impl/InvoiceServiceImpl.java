@@ -166,19 +166,20 @@ public class InvoiceServiceImpl implements InvoiceService {
     public Optional<InvoiceResponseDTO> getInvoiceById(Long id) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
-        Optional<InvoiceResponseDTO> invoice = invoiceRepository.findByIdAndUserId(id, userId);
-        if (invoice.isEmpty()) {
+        Optional<Invoice> invoiceOpt = invoiceRepository.findByIdAndUserIdOpt(id, userId);
+        if (invoiceOpt.isEmpty()) {
             throw new UnauthorizedException("Unauthorized Invoice or Invoice not found!");
         }
 
-        return invoice;
+        Invoice invoice = invoiceOpt.get();
+        return Optional.of(InvoiceResponseDTO.fromEntity(invoice));
     }
 
     @Override
     public Invoice updateInvoiceStatus(Long id, Invoice.Status status) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 
-        Optional<InvoiceResponseDTO> checkInvoice = invoiceRepository.findByIdAndUserId(id, userId);
+        Optional<Invoice> checkInvoice = invoiceRepository.findByIdAndUserIdOpt(id, userId);
         if (checkInvoice.isEmpty()) {
             throw new UnauthorizedException("Unauthorized Invoice!");
         }
@@ -210,7 +211,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     public void sendInvoiceByEmail(Long invoiceId) throws MessagingException {
         Long userId = Claims.getUserIdFromJwt();
 
-        Optional<InvoiceResponseDTO> checkInvoice = invoiceRepository.findByIdAndUserId(invoiceId, userId);
+        Optional<Invoice> checkInvoice = invoiceRepository.findByIdAndUserIdOpt(invoiceId, userId);
         if (checkInvoice.isEmpty()) {
             throw new UnauthorizedException("Unauthorized Invoice!");
         }

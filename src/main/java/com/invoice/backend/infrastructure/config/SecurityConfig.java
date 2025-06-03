@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Public endpoints
                         .requestMatchers("/error/**").permitAll()
-                        .requestMatchers("/api/v1/auth/register").permitAll()
+                        .requestMatchers("/api/v1/user/register/**").permitAll()
                         .requestMatchers("/api/v1/auth/login").permitAll()
                         .requestMatchers("/api/v1/invoices/process-overdue").permitAll()
                         .requestMatchers("/api/v1/invoices/process-recurring").permitAll()

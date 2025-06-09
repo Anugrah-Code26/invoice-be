@@ -56,6 +56,11 @@ public class InvoiceController {
         return ApiResponse.success(HttpStatus.OK.value(), "Get all invoices success!", invoiceService.getAllInvoices());
     }
 
+    @GetMapping("/user/all")
+    public ResponseEntity<?> getInvoicesByUserId() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all user's invoices success!", invoiceService.getInvoicesByUserId());
+    }
+
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getInvoicesByStatus(
             @PathVariable String status) {

@@ -28,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -144,6 +141,20 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         return invoiceRepository.findAll().stream()
+                .map(InvoiceResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<InvoiceResponseDTO> getInvoicesByUserId() {
+        Long userId = Claims.getUserIdFromJwt();
+
+        List<Invoice> userInvoices = invoiceRepository.findByUserId(userId);
+        if (userInvoices == null) {
+            return Collections.emptyList();
+        }
+
+        return invoiceRepository.findByUserId(userId).stream()
                 .map(InvoiceResponseDTO::fromEntity)
                 .collect(Collectors.toList());
     }

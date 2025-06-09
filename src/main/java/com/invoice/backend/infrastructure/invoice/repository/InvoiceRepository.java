@@ -24,6 +24,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long>, JpaSpec
     @Query("SELECT i FROM Invoice i WHERE i.status = :status")
     List<Invoice> findByStatus(@Param("status") Status status);
 
+    @Query("SELECT i FROM Invoice i WHERE i.user.id = :userId")
+    List<Invoice> findByUserId(@Param("userId") Long userId);
+
     @Query("SELECT i FROM Invoice i WHERE i.user.id = :userId AND i.status = :status")
     List<Invoice> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") Status status);
 

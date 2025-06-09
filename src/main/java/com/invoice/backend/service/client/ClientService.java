@@ -12,6 +12,7 @@ public interface ClientService {
     Client createClient(ClientDTO clientDTO);
     List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber);
     List<Client> getAllClients();
+    List<ClientResponseDTO> getClientsByUserId();
     Client getClientById(Long id) throws DataNotFoundException;
     Client updateClient(Long id, ClientDTO clientDTO) throws DataNotFoundException;
     void deleteClient(Long id) throws DataNotFoundException;

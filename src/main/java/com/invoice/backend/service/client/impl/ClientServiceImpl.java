@@ -77,6 +77,20 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public List<ClientResponseDTO> getClientsByUserId() {
+        Long userId = Claims.getUserIdFromJwt();
+
+        List<Client> userClients = clientRepository.findByUserId(userId);
+        if (userClients == null) {
+            return Collections.emptyList();
+        }
+
+        return clientRepository.findByUserId(userId).stream()
+                .map(ClientResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Client getClientById(Long id) throws DataNotFoundException {
         Long userId = Claims.getUserIdFromJwt();
 

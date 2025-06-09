@@ -37,6 +37,11 @@ public class ClientController {
         return ApiResponse.success(HttpStatus.OK.value(), "Get all clients data success!", clientService.getAllClients());
     }
 
+    @GetMapping("/user/all")
+    public ResponseEntity<?> getClientsByUserId() {
+        return ApiResponse.success(HttpStatus.OK.value(), "Get all user clients data success!", clientService.getClientsByUserId());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getClientById(@PathVariable Long id) throws DataNotFoundException {
         return ApiResponse.success(HttpStatus.OK.value(), "Get client by id success!", clientService.getClientById(id));

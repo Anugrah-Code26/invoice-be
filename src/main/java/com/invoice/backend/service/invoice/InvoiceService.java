@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface InvoiceService {
     Invoice createInvoice(InvoiceDTO invoiceDTO) throws DataNotFoundException;
-    List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status);
+    List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status, String sortBy, String sortDir);
     List<InvoiceResponseDTO> getAllInvoices();
     List<InvoiceResponseDTO> getInvoicesByUserId();
     List<InvoiceResponseDTO> getInvoicesByStatus(Invoice.Status status);

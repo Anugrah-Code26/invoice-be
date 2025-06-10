@@ -46,9 +46,11 @@ public class InvoiceController {
             @RequestParam(required = false) String invoiceNumber,
             @RequestParam(required = false) String clientName,
             @RequestParam(required = false) String date,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get invoices success!", invoiceService.searchInvoices(invoiceNumber, clientName, date, status));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get invoices success!", invoiceService.searchInvoices(invoiceNumber, clientName, date, status, sortBy, sortDir));
     }
 
     @GetMapping("/all")

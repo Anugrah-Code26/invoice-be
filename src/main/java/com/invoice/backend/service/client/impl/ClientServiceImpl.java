@@ -13,6 +13,7 @@ import com.invoice.backend.common.exceptions.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.sql.ast.tree.expression.Collation;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +48,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber) {
+    public List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber, String sortBy, String sortDir) {
         Long userId = Claims.getUserIdFromJwt();
 
         Specification<Client> spec = Specification.where(hasUserId(userId))
@@ -55,7 +56,10 @@ public class ClientServiceImpl implements ClientService {
                 .and(hasEmail(email))
                 .and(hasPhoneNumber(phoneNumber));
 
-        List<Client> clients = clientRepository.findAll(spec);
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+
+        List<Client> clients = clientRepository.findAll(spec, sort);
         if (clients.isEmpty()) {
             return Collections.emptyList();
         }

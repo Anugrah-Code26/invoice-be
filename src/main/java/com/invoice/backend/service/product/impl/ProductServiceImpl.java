@@ -11,9 +11,11 @@ import com.invoice.backend.service.product.ProductService;
 import com.invoice.backend.common.exceptions.DataNotFoundException;
 import com.invoice.backend.service.product.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -40,7 +42,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> findProducts(String search, Double minPrice, Double maxPrice) {
+    public List<Product> findProducts(String search, Double minPrice, Double maxPrice, String sortBy, String sortDir) {
         Long userId = Claims.getUserIdFromJwt();
 
         Specification<Product> spec = Specification.where(ProductSpecification.hasUserId(userId))
@@ -49,7 +51,14 @@ public class ProductServiceImpl implements ProductService {
                 .and(ProductSpecification.priceLessThanOrEqual(maxPrice))
                 .and((root, query, cb) -> cb.isFalse(root.get("deleted")));
 
-        return productRepository.findAll(spec);
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+
+        List<Product> products = productRepository.findAll(spec, sort);
+        if (products.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return products;
     }
 
     @Override

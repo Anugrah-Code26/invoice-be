@@ -27,9 +27,11 @@ public class ClientController {
     public ResponseEntity<?> searchClients(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) String phoneNumber
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get client success!", clientService.searchClients(name, email, phoneNumber));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get client success!", clientService.searchClients(name, email, phoneNumber, sortBy, sortDir));
     }
 
     @GetMapping("/all")

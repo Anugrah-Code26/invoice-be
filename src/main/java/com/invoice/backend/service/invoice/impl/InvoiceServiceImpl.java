@@ -23,6 +23,7 @@ import com.invoice.backend.service.user.EmailService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,7 +117,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         return item;
     }
 
-    public List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status) {
+    public List<InvoiceResponseDTO> searchInvoices(String invoiceNumber, String clientName, String date, String status, String sortBy, String sortDir) {
         Long userId = Claims.getUserIdFromJwt();
 
         Specification<Invoice> spec = Specification
@@ -126,7 +127,10 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .and(InvoiceSpecification.hasDate(date))
                 .and(InvoiceSpecification.hasStatus(status));
 
-        List<Invoice> invoices = invoiceRepository.findAll(spec);
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+
+        List<Invoice> invoices = invoiceRepository.findAll(spec, sort);
         return invoices.stream()
                 .map(InvoiceResponseDTO::fromEntity)
                 .collect(Collectors.toList());

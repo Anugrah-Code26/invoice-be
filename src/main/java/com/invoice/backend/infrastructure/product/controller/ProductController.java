@@ -31,9 +31,11 @@ public class ProductController {
     public ResponseEntity<?> getProducts(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return ApiResponse.success(HttpStatus.OK.value(), "Get product success!", productService.findProducts(search, minPrice, maxPrice));
+        return ApiResponse.success(HttpStatus.OK.value(), "Get product success!", productService.findProducts(search, minPrice, maxPrice, sortBy, sortDir));
     }
 
     @GetMapping("/active/all")

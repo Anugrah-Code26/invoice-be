@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ClientService {
     Client createClient(ClientDTO clientDTO);
-    List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber);
+    List<ClientResponseDTO> searchClients(String name, String email, String phoneNumber, String sortBy, String sortDir);
     List<Client> getAllClients();
     List<ClientResponseDTO> getClientsByUserId();
     Client getClientById(Long id) throws DataNotFoundException;
